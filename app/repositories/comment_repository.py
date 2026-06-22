@@ -3,7 +3,7 @@ from typing import Any
 from urllib.parse import urlparse, urlunparse
 
 from bson import ObjectId
-from pymongo import ASCENDING, DESCENDING
+from pymongo import ASCENDING, DESCENDING, ReturnDocument
 
 from app.core.database import database
 
@@ -61,6 +61,14 @@ async def create_comment_indexes() -> None:
 # ─── Serializer ───────────────────────────────────────────────────────────────
 
 def serialize_comment(doc: dict[str, Any]) -> dict[str, Any]:
+    created_at = doc["created_at"]
+    if created_at and created_at.tzinfo is None:
+        created_at = created_at.replace(tzinfo=timezone.utc)
+        
+    updated_at = doc.get("updated_at")
+    if updated_at and updated_at.tzinfo is None:
+        updated_at = updated_at.replace(tzinfo=timezone.utc)
+
     return {
         "id": str(doc["_id"]),
         "user_id": doc["user_id"],
@@ -68,8 +76,8 @@ def serialize_comment(doc: dict[str, Any]) -> dict[str, Any]:
         "article_url": doc["article_url"],
         "article_title": doc.get("article_title", ""),
         "content": doc["content"],
-        "created_at": doc["created_at"],
-        "updated_at": doc.get("updated_at"),
+        "created_at": created_at,
+        "updated_at": updated_at,
     }
 
 
@@ -132,7 +140,7 @@ async def update_comment(comment_id: str, content: str) -> dict[str, Any] | None
     result = await comments_collection.find_one_and_update(
         {"_id": ObjectId(comment_id)},
         {"$set": {"content": content, "updated_at": now}},
-        return_document=True,
+        return_document=ReturnDocument.AFTER,
     )
     return result
 
