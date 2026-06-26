@@ -1,10 +1,18 @@
 from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 
-from app.schemas.user import TokenResponse, UserCreate, UserLogin, UserPublic, PasswordChange
+from app.schemas.user import (
+    GoogleLoginRequest,
+    TokenResponse,
+    UserCreate,
+    UserLogin,
+    UserPublic,
+    PasswordChange,
+)
 from app.services.auth_service import (
     change_user_password,
     get_current_user_from_token,
+    google_login,
     login_user,
     logout_current_user,
     register_user,
@@ -45,3 +53,8 @@ async def logout(token: str = Depends(oauth2_scheme)):
 async def change_password(payload: PasswordChange, token: str = Depends(oauth2_scheme)):
     """Change the authenticated user's password. Requires current password verification."""
     await change_user_password(token, payload)
+
+
+@router.post("/google", response_model=TokenResponse)
+async def google(payload: GoogleLoginRequest):
+    return await google_login(payload)

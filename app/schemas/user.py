@@ -89,10 +89,17 @@ class UserPublic(BaseModel):
     name: str
     email: EmailStr
     is_active: bool
+    provider: str | None = None
+    google_id: str | None = None
+    is_email_verified: bool = False
     created_at: datetime
     updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
+
+
+class GoogleLoginRequest(BaseModel):
+    id_token: str = Field(min_length=1)
 
 
 class TokenResponse(BaseModel):

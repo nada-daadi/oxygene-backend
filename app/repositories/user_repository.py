@@ -26,6 +26,9 @@ def serialize_user(user: dict[str, Any]) -> dict[str, Any]:
         "name": user["name"],
         "email": user["email"],
         "is_active": user.get("is_active", True),
+        "provider": user.get("provider"),
+        "google_id": user.get("google_id"),
+        "is_email_verified": user.get("is_email_verified", False),
         "created_at": user["created_at"],
         "updated_at": user["updated_at"],
     }
@@ -59,16 +62,22 @@ async def get_user_by_id(user_id: str) -> dict[str, Any] | None:
 async def create_user(
     name: str,
     email: str,
-    hashed_password: str,
+    hashed_password: str | None,
     phone: str | None = None,
     sexe: str | None = None,
     adresse: str | None = None,
+    provider: str | None = None,
+    google_id: str | None = None,
+    is_email_verified: bool = False,
 ) -> dict[str, Any]:
     now = datetime.now(timezone.utc)
     user_document = {
         "name": name.strip(),
         "email": email.lower(),
         "hashed_password": hashed_password,
+        "provider": provider,
+        "google_id": google_id,
+        "is_email_verified": is_email_verified,
         "is_active": True,
         "phone": phone,
         "sexe": sexe,
@@ -92,6 +101,12 @@ async def update_user(user_id: str, updates: dict[str, Any]) -> dict[str, Any] |
         update_document["email"] = updates["email"].lower()
     if "hashed_password" in updates and updates["hashed_password"] is not None:
         update_document["hashed_password"] = updates["hashed_password"]
+    if "provider" in updates:
+        update_document["provider"] = updates["provider"]
+    if "google_id" in updates:
+        update_document["google_id"] = updates["google_id"]
+    if "is_email_verified" in updates:
+        update_document["is_email_verified"] = updates["is_email_verified"]
 
     if not update_document:
         return await get_user_by_id(user_id)
