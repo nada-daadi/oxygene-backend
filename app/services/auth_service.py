@@ -1,10 +1,11 @@
-from fastapi import HTTPException, status
+from fastapi import HTTPException, status, UploadFile, File
 from jose import JWTError
 from pymongo.errors import DuplicateKeyError
 
 from google.auth.transport import requests as google_requests
 from google.oauth2 import id_token as google_id_token
 from app.core.config import settings
+from app.core.cloudinary_client import upload_to_cloudinary
 
 from app.core.security import (
     create_access_token,
@@ -140,6 +141,46 @@ async def update_current_user(token: str, payload: UserUpdate) -> UserPublic:
     if not user:
         raise invalid_credentials_exception()
 
+    return UserPublic(**serialize_user(user))
+
+
+async def update_user_avatar(token: str, file: UploadFile) -> UserPublic:
+    current_user = await get_current_user_from_token(token)
+
+    allowed_types = {"image/jpeg", "image/png", "image/webp", "image/jpg"}
+    if file.content_type not in allowed_types:
+        raise HTTPException(status.HTTP_415_UNSUPPORTED_MEDIA_TYPE, "Unsupported image type")
+
+    file_bytes = await file.read()
+    max_size = 5 * 1024 * 1024  # 5 MB
+    if len(file_bytes) > max_size:
+        raise HTTPException(status.HTTP_413_REQUEST_ENTITY_TOO_LARGE, "Avatar must be 5MB or smaller")
+
+    # Upload to Cloudinary — no eager transformation to keep upload fast
+    try:
+        result = await upload_to_cloudinary(
+            file_bytes,
+            public_id=f"avatar_{current_user.id}",
+            resource_type="image",
+            overwrite=True,
+        )
+    except Exception as e:
+        raise HTTPException(status.HTTP_500_INTERNAL_SERVER_ERROR, f"Failed to upload avatar: {str(e)}")
+
+    # Build a crop+resize URL by injecting the transformation into the secure_url
+    # e.g. https://res.cloudinary.com/cloud/image/upload/v123/avatar_xxx.jpg
+    #   → https://res.cloudinary.com/cloud/image/upload/c_fill,w_300,h_300/v123/avatar_xxx.jpg
+    raw_url: str = result.get("secure_url", "")
+    avatar_url = raw_url.replace("/image/upload/", "/image/upload/c_fill,w_300,h_300,q_auto,f_auto/")
+
+    user = await update_user(current_user.id, {
+        "avatar_url": avatar_url,
+        "avatar_public_id": result.get("public_id"),
+    })
+    
+    if not user:
+        raise invalid_credentials_exception()
+        
     return UserPublic(**serialize_user(user))
 
 

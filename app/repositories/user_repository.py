@@ -26,6 +26,8 @@ def serialize_user(user: dict[str, Any]) -> dict[str, Any]:
         "name": user["name"],
         "email": user["email"],
         "is_active": user.get("is_active", True),
+        "bio": user.get("bio"),
+        "avatar_url": user.get("avatar_url"),
         "provider": user.get("provider"),
         "google_id": user.get("google_id"),
         "is_email_verified": user.get("is_email_verified", False),
@@ -79,6 +81,9 @@ async def create_user(
         "google_id": google_id,
         "is_email_verified": is_email_verified,
         "is_active": True,
+        "bio": None,
+        "avatar_url": None,
+        "avatar_public_id": None,
         "phone": phone,
         "sexe": sexe,
         "adresse": adresse,
@@ -99,6 +104,12 @@ async def update_user(user_id: str, updates: dict[str, Any]) -> dict[str, Any] |
         update_document["name"] = updates["name"].strip()
     if "email" in updates and updates["email"] is not None:
         update_document["email"] = updates["email"].lower()
+    if "bio" in updates:
+        update_document["bio"] = updates["bio"]
+    if "avatar_url" in updates:
+        update_document["avatar_url"] = updates["avatar_url"]
+    if "avatar_public_id" in updates:
+        update_document["avatar_public_id"] = updates["avatar_public_id"]
     if "hashed_password" in updates and updates["hashed_password"] is not None:
         update_document["hashed_password"] = updates["hashed_password"]
     if "provider" in updates:

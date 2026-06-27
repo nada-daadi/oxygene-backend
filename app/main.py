@@ -4,6 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.database import client, init_database
+from app.core.cloudinary_client import init_cloudinary
 
 # Routers
 from app.routers.auth import router as auth_router
@@ -14,6 +15,7 @@ from app.routers.comments import router as comments_router
 from app.routers.ratings import router as ratings_router
 from app.routers.chatbot import router as chatbot_router
 from app.routers.shares import router as shares_router
+from app.routers.records import router as records_router
 
 
 @asynccontextmanager
@@ -22,6 +24,7 @@ async def lifespan(app: FastAPI):
     print("🚀 Oxygène FM API Started")
 
     await init_database()
+    init_cloudinary()
 
     yield
 
@@ -95,6 +98,12 @@ app.include_router(
     shares_router,
     prefix="/api/shares",
     tags=["Shares"]
+)
+
+app.include_router(
+    records_router,
+    prefix="/api/records",
+    tags=["Records"]
 )
 
 

@@ -43,7 +43,7 @@ class UserLogin(BaseModel):
 
 class UserUpdate(BaseModel):
     name: str | None = Field(default=None, min_length=2, max_length=100)
-    email: EmailStr | None = None
+    bio: str | None = Field(default=None, max_length=500)
 
     @field_validator("name", mode="before")
     @classmethod
@@ -52,16 +52,16 @@ class UserUpdate(BaseModel):
             return value.strip()
         return value
 
-    @field_validator("email")
+    @field_validator("bio", mode="before")
     @classmethod
-    def normalize_email(cls, value: EmailStr | None) -> str | None:
-        if value is None:
-            return None
-        return str(value).lower()
+    def normalize_bio(cls, value: str | None) -> str | None:
+        if isinstance(value, str):
+            return value.strip()
+        return value
 
     @model_validator(mode="after")
     def require_profile_field(self):
-        if self.name is None and self.email is None:
+        if self.name is None and self.bio is None:
             raise ValueError("At least one profile field must be provided")
         return self
 
@@ -89,6 +89,8 @@ class UserPublic(BaseModel):
     name: str
     email: EmailStr
     is_active: bool
+    bio: str | None = None
+    avatar_url: str | None = None
     provider: str | None = None
     google_id: str | None = None
     is_email_verified: bool = False
