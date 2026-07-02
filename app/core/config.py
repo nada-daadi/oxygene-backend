@@ -16,6 +16,10 @@ class Settings(BaseSettings):
     CLOUDINARY_API_KEY: str
     CLOUDINARY_API_SECRET: str
 
+    # AI module
+    GEMINI_API_KEY: str = ""
+    AUDIO_STORAGE_PATH: str = "audio_files"
+
     class Config:
         env_file = ".env"
 

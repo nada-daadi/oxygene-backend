@@ -16,6 +16,7 @@ from app.routers.ratings import router as ratings_router
 from app.routers.chatbot import router as chatbot_router
 from app.routers.shares import router as shares_router
 from app.routers.records import router as records_router
+from app.ai.router import router as ai_router
 
 
 @asynccontextmanager
@@ -104,6 +105,12 @@ app.include_router(
     records_router,
     prefix="/api/records",
     tags=["Records"]
+)
+
+app.include_router(
+    ai_router,
+    prefix="/api/ai",
+    tags=["AI"]
 )
 
 
